@@ -1,0 +1,612 @@
+Вы сказали:
+I'll create a comprehensive Python script for the Telegram Similar Channels Crawler that meets all of your requirements. This single file includes all the necessary functionality while maintaining a modular structure.
+
+python
+#!/usr/bin/env python3
+"""
+Telegram Similar Channels Crawler
+A tool to fetch similar Telegram channels and append them to Google Sheets.
+"""
+
+import os
+import sys
+import json
+import time
+import asyncio
+import logging
+import argparse
+from datetime import datetime
+from typing import List, Dict, Any, Optional, Tuple
+
+# Third-party dependencies
+from dotenv import load_dotenv
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+from telethon import TelegramClient, errors
+from telethon.tl.functions.channels import GetSimilarChannelsRequest
+from telethon.tl.types import Channel, Chat, User
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler("crawler.log"),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger("TelegramCrawler")
+
+# Load environment variables
+load_dotenv()
+
+class InputHandler:
+    """Handles the loading and validation of input channels."""
+    
+    @staticmethod
+    def load_from_cli(args: List[str]) -> List[str]:
+        """Load channel usernames from command line arguments."""
+        return args
+    
+    @staticmethod
+    def load_from_file(file_path: str) -> List[str]:
+        """Load channel usernames from a JSON or CSV file."""
+        if not os.path.exists(file_path):
+            logger.error(f"Input file {file_path} not found.")
+            return []
+        
+        try:
+            if file_path.endswith('.json'):
+                with open(file_path, 'r') as f:
+                    channels = json.load(f)
+                    if not isinstance(channels, list):
+                        logger.error("JSON file must contain a list of channel usernames.")
+                        return []
+                    return channels
+            elif file_path.endswith('.csv'):
+                with open(file_path, 'r') as f:
+                    return [line.strip() for line in f if line.strip()]
+            else:
+                logger.error("Unsupported file format. Use .json or .csv")
+                return []
+        except Exception as e:
+            logger.error(f"Error loading input file: {e}")
+            return []
+    
+    @staticmethod
+    def load_from_sheets(sheet_name: str, worksheet_name: str, column_name: str) -> List[str]:
+        """Load channel usernames from a Google Sheet."""
+        try:
+            sheets_handler = SheetsHandler(sheet_name)
+            return sheets_handler.get_column_values(worksheet_name, column_name)
+        except Exception as e:
+            logger.error(f"Error loading from Google Sheets: {e}")
+            return []
+    
+    @staticmethod
+    def validate_channels(channels: List[str]) -> List[str]:
+        """Validate and normalize channel usernames."""
+        valid_channels = []
+        for channel in channels:
+            if not channel:
+                continue
+                
+            # Remove @ prefix if present
+            if channel.startswith('@'):
+                channel = channel[1:]
+                
+            # Basic validation: no spaces, reasonable length
+            if ' ' in channel or len(channel) < 3 or len(channel) > 32:
+                logger.warning(f"Invalid channel name: {channel}")
+                continue
+                
+            valid_channels.append(channel)
+            
+        logger.info(f"Validated {len(valid_channels)} channels out of {len(channels)}")
+        return valid_channels
+
+class TelegramCrawler:
+    """Handles the interaction with the Telegram API."""
+    
+    def __init__(self, api_id: str, api_hash: str, phone: str = None, session_name: str = "crawler"):
+        """Initialize the Telegram client."""
+        self.api_id = api_id
+        self.api_hash = api_hash
+        self.phone = phone
+        self.session_name = session_name
+        self.client = None
+    
+    async def connect(self) -> bool:
+        """Connect to Telegram and handle authentication."""
+        try:
+            self.client = TelegramClient(self.session_name, self.api_id, self.api_hash)
+            await self.client.connect()
+            
+            if not await self.client.is_user_authorized():
+                if not self.phone:
+                    self.phone = input("Enter your phone number (with country code): ")
+                
+                await self.client.send_code_request(self.phone)
+                code = input("Enter the code you received: ")
+                
+                try:
+                    await self.client.sign_in(self.phone, code)
+                except errors.SessionPasswordNeededError:
+                    password = input("Two-factor authentication is enabled. Enter your password: ")
+                    await self.client.sign_in(password=password)
+            
+            logger.info("Successfully connected to Telegram")
+            return True
+        except Exception as e:
+            logger.error(f"Error connecting to Telegram: {e}")
+            return False
+    
+    async def get_similar_channels(self, channel_username: str) -> List[Dict[str, Any]]:
+        """Fetch similar channels for a given channel."""
+        try:
+            # Try to resolve the entity first
+            entity = await self.client.get_entity(channel_username)
+            
+            # Fetch similar channels
+            result = await self.client(GetSimilarChannelsRequest(channel=entity))
+            
+            # Process the results
+            similar_channels = []
+            for chat in result.chats:
+                if not hasattr(chat, 'username') or not chat.username:
+                    logger.warning(f"Skipping channel without username: {chat.title}")
+                    continue
+                
+                channel_info = {
+                    "title": chat.title,
+                    "username": chat.username,
+                    "url": f"https://t.me/{chat.username}",
+                    "timestamp": datetime.now().isoformat(),
+                    "members": getattr(chat, 'participants_count', None)
+                }
+                
+                similar_channels.append(channel_info)
+            
+            logger.info(f"Found {len(similar_channels)} similar channels for {channel_username}")
+            return similar_channels
+        except errors.FloodWaitError as e:
+            # Handle rate limiting
+            wait_time = e.seconds
+            logger.warning(f"Rate limited. Waiting for {wait_time} seconds")
+            await asyncio.sleep(wait_time)
+            return []
+        except Exception as e:
+            logger.error(f"Error fetching similar channels for {channel_username}: {e}")
+            return []
+    
+    async def close(self):
+        """Close the Telegram client connection."""
+        if self.client:
+            await self.client.disconnect()
+            logger.info("Disconnected from Telegram")
+
+class SheetsHandler:
+    """Handles the interaction with Google Sheets."""
+    
+    def __init__(self, sheet_name: str):
+        """Initialize the Google Sheets client."""
+        self.sheet_name = sheet_name
+        self.client = self._authenticate()
+        self.sheet = self._get_or_create_sheet()
+    
+    def _authenticate(self) -> gspread.Client:
+        """Authenticate with Google Sheets API."""
+        try:
+            creds_file = os.getenv('GOOGLE_CREDENTIALS_FILE', 'service_account.json')
+            scope = [
+                'https://spreadsheets.google.com/feeds',
+                'https://www.googleapis.com/auth/drive'
+            ]
+            credentials = ServiceAccountCredentials.from_json_keyfile_name(creds_file, scope)
+            return gspread.authorize(credentials)
+        except Exception as e:
+            logger.error(f"Error authenticating with Google Sheets: {e}")
+            raise
+    
+    def _get_or_create_sheet(self) -> gspread.Spreadsheet:
+        """Get or create the target Google Sheet."""
+        try:
+            # Try to open existing sheet
+            return self.client.open(self.sheet_name)
+        except gspread.SpreadsheetNotFound:
+            # Create new sheet if not found
+            sheet = self.client.create(self.sheet_name)
+            # Share with the service account
+            service_email = json.loads(open(os.getenv('GOOGLE_CREDENTIALS_FILE', 'service_account.json')).read())['client_email']
+            sheet.share(service_email, perm_type='user', role='writer')
+            logger.info(f"Created new Google Sheet: {self.sheet_name}")
+            return sheet
+    
+    def get_or_create_worksheet(self, worksheet_name: str, headers: List[str]) -> gspread.Worksheet:
+        """Get or create a worksheet with the given headers."""
+        try:
+            # Try to get existing worksheet
+            worksheet = self.sheet.worksheet(worksheet_name)
+            # Check if headers match
+            existing_headers = worksheet.row_values(1)
+            if existing_headers != headers:
+                logger.warning(f"Existing headers {existing_headers} don't match expected headers {headers}")
+            return worksheet
+        except gspread.WorksheetNotFound:
+            # Create new worksheet with headers
+            worksheet = self.sheet.add_worksheet(title=worksheet_name, rows=1, cols=len(headers))
+            worksheet.append_row(headers)
+            logger.info(f"Created new worksheet: {worksheet_name}")
+            return worksheet
+    
+    def get_column_values(self, worksheet_name: str, column_name: str) -> List[str]:
+        """Get values from a specific column in the worksheet."""
+        try:
+            worksheet = self.sheet.worksheet(worksheet_name)
+            all_values = worksheet.get_all_records()
+            return [row[column_name] for row in all_values if column_name in row and row[column_name]]
+        except Exception as e:
+            logger.error(f"Error getting column values: {e}")
+            return []
+    
+    def append_rows(self, worksheet_name: str, headers: List[str], rows: List[List[str]]) -> int:
+        """Append rows to a worksheet, avoiding duplicates."""
+        if not rows:
+            return 0
+            
+        worksheet = self.get_or_create_worksheet(worksheet_name, headers)
+        
+        # Get existing data to check for duplicates
+        existing_data = worksheet.get_all_values()
+        if existing_data:
+            existing_urls = []
+            url_index = headers.index("URL")
+            for row in existing_data[1:]:  # Skip header row
+                if len(row) > url_index:
+                    existing_urls.append(row[url_index])
+        else:
+            existing_urls = []
+        
+        # Filter out duplicates
+        new_rows = []
+        for row in rows:
+            url_value = row[headers.index("URL")]
+            if url_value not in existing_urls:
+                new_rows.append(row)
+                existing_urls.append(url_value)
+        
+        if not new_rows:
+            logger.info("No new channels to add")
+            return 0
+        
+        # Append in batches to avoid quota limits
+        batch_size = 50
+        rows_added = 0
+        for i in range(0, len(new_rows), batch_size):
+            batch = new_rows[i:i+batch_size]
+            try:
+                worksheet.append_rows(batch)
+                rows_added += len(batch)
+                logger.info(f"Added batch of {len(batch)} rows")
+                
+                # Rate limiting
+                if i + batch_size < len(new_rows):
+                    logger.info("Sleeping for 1 second to avoid quota limits")
+                    time.sleep(1)
+            except Exception as e:
+                logger.error(f"Error appending batch: {e}")
+        
+        return rows_added
+
+async def process_channels(input_channels: List[str], config: Dict[str, Any]) -> None:
+    """Main process to fetch similar channels and write to Google Sheets."""
+    # Initialize handlers
+    telegram_crawler = TelegramCrawler(
+        api_id=config['telegram_api_id'],
+        api_hash=config['telegram_api_hash'],
+        phone=config.get('telegram_phone'),
+        session_name=config.get('telegram_session', 'crawler')
+    )
+    
+    sheets_handler = SheetsHandler(config['google_sheet_name'])
+    
+    # Connect to Telegram
+    if not await telegram_crawler.connect():
+        logger.error("Failed to connect to Telegram. Exiting.")
+        return
+    
+    # Process channels
+    total_channels = len(input_channels)
+    successful_channels = 0
+    failed_channels = 0
+    all_similar_channels = []
+    
+    # Process in batches with concurrency
+    concurrency_limit = config.get('concurrency_limit', 5)
+    batch_size = concurrency_limit
+    
+    for i in range(0, total_channels, batch_size):
+        batch = input_channels[i:i+batch_size]
+        logger.info(f"Processing batch of {len(batch)} channels ({i+1}-{min(i+batch_size, total_channels)} of {total_channels})")
+        
+        # Create tasks for concurrent execution
+        tasks = []
+        for channel in batch:
+            task = asyncio.create_task(telegram_crawler.get_similar_channels(channel))
+            tasks.append((channel, task))
+        
+        # Process results as they complete
+        for original_channel, task in tasks:
+            try:
+                similar_channels = await task
+                
+                if similar_channels:
+                    # Add the original channel to each result
+                    for channel in similar_channels:
+                        channel['original_channel'] = original_channel
+                    
+                    all_similar_channels.extend(similar_channels)
+                    successful_channels += 1
+                else:
+                    logger.warning(f"No similar channels found for {original_channel}")
+                    failed_channels += 1
+            except Exception as e:
+                logger.error(f"Error processing {original_channel}: {e}")
+                failed_channels += 1
+        
+        # Write batch to Google Sheets
+        if all_similar_channels:
+            # Prepare rows for Google Sheets
+            headers = ["Original Channel", "Similar Channel Title", "URL", "Timestamp", "Members"]
+            rows = []
+            
+            for channel in all_similar_channels:
+                row = [
+                    channel['original_channel'],
+                    channel['title'],
+                    channel['url'],
+                    channel['timestamp'],
+                    str(channel['members']) if channel['members'] else 'N/A'
+                ]
+                rows.append(row)
+            
+            # Append to Google Sheets
+            rows_added = sheets_handler.append_rows(
+                config.get('google_worksheet_name', 'Similar Channels'),
+                headers,
+                rows
+            )
+            
+            logger.info(f"Added {rows_added} new similar channels to Google Sheets")
+            all_similar_channels = []  # Clear after writing
+        
+        # Rate limiting between batches
+        if i + batch_size < total_channels:
+            wait_time = config.get('batch_delay', 2)
+            logger.info(f"Waiting {wait_time} seconds before next batch")
+            await asyncio.sleep(wait_time)
+    
+    # Close Telegram connection
+    await telegram_crawler.close()
+    
+    # Log summary
+    logger.info("=" * 50)
+    logger.info(f"SUMMARY: Processed {total_channels} channels")
+    logger.info(f"Successful: {successful_channels}")
+    logger.info(f"Failed: {failed_channels}")
+    logger.info("=" * 50)
+
+def load_config() -> Dict[str, Any]:
+    """Load configuration from environment variables or config file."""
+    config = {
+        'telegram_api_id': os.getenv('TELEGRAM_API_ID'),
+        'telegram_api_hash': os.getenv('TELEGRAM_API_HASH'),
+        'telegram_phone': os.getenv('TELEGRAM_PHONE'),
+        'telegram_session': os.getenv('TELEGRAM_SESSION', 'crawler'),
+        'google_sheet_name': os.getenv('GOOGLE_SHEET_NAME', 'Telegram Similar Channels'),
+        'google_worksheet_name': os.getenv('GOOGLE_WORKSHEET_NAME', 'Similar Channels'),
+        'concurrency_limit': int(os.getenv('CONCURRENCY_LIMIT', '5')),
+        'batch_delay': int(os.getenv('BATCH_DELAY', '2')),
+        'log_level': os.getenv('LOG_LEVEL', 'INFO'),
+    }
+    
+    # Try to load from config file if exists
+    config_file = os.getenv('CONFIG_FILE', 'config.json')
+    if os.path.exists(config_file):
+        try:
+            with open(config_file, 'r') as f:
+                file_config = json.load(f)
+                config.update(file_config)
+        except Exception as e:
+            logger.warning(f"Error loading config file: {e}")
+    
+    # Validate required config
+    required_keys = ['telegram_api_id', 'telegram_api_hash', 'google_sheet_name']
+    missing_keys = [key for key in required_keys if not config.get(key)]
+    
+    if missing_keys:
+        logger.error(f"Missing required configuration: {', '.join(missing_keys)}")
+        logger.error("Please set environment variables or update config.json")
+        sys.exit(1)
+    
+    return config
+
+def parse_arguments() -> argparse.Namespace:
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(description="Telegram Similar Channels Crawler")
+    
+    input_group = parser.add_mutually_exclusive_group()
+    input_group.add_argument('channels', nargs='*', help="List of channel usernames")
+    input_group.add_argument('--input-file', help="Path to JSON or CSV file with channel usernames")
+    input_group.add_argument('--from-sheet', nargs=2, metavar=('WORKSHEET', 'COLUMN'), 
+                             help="Load channels from Google Sheet (worksheet name and column name)")
+    
+    parser.add_argument('--sheet-name', help="Google Sheet name")
+    parser.add_argument('--worksheet-name', help="Google Worksheet name")
+    parser.add_argument('--config', help="Path to config file")
+    parser.add_argument('--log-level', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'], 
+                        help="Logging level")
+    
+    return parser.parse_args()
+
+async def main():
+    """Main entry point of the script."""
+    # Parse arguments
+    args = parse_arguments()
+    
+    # Set config file from args
+    if args.config:
+        os.environ['CONFIG_FILE'] = args.config
+    
+    # Load configuration
+    config = load_config()
+    
+    # Update config from args
+    if args.sheet_name:
+        config['google_sheet_name'] = args.sheet_name
+    if args.worksheet_name:
+        config['google_worksheet_name'] = args.worksheet_name
+    if args.log_level:
+        config['log_level'] = args.log_level
+        logger.setLevel(getattr(logging, config['log_level']))
+    
+    # Load channels from the appropriate source
+    if args.input_file:
+        input_channels = InputHandler.load_from_file(args.input_file)
+    elif args.from_sheet:
+        worksheet_name, column_name = args.from_sheet
+        input_channels = InputHandler.load_from_sheets(
+            config['google_sheet_name'], 
+            worksheet_name, 
+            column_name
+        )
+    elif args.channels:
+        input_channels = args.channels
+    else:
+        # Default: try to load from input_channels.json
+        default_input_file = 'input_channels.json'
+        if os.path.exists(default_input_file):
+            input_channels = InputHandler.load_from_file(default_input_file)
+        else:
+            logger.error("No input channels provided and no default file found.")
+            sys.exit(1)
+    
+    # Validate channels
+    input_channels = InputHandler.validate_channels(input_channels)
+    
+    if not input_channels:
+        logger.error("No valid input channels found. Exiting.")
+        sys.exit(1)
+    
+    logger.info(f"Starting crawler with {len(input_channels)} input channels")
+    
+    # Process channels
+    await process_channels(input_channels, config)
+
+if __name__ == "__main__":
+    asyncio.run(main())
+
+
+To use this code on Replit or similar platforms, you'll need to create a few additional files:
+
+1. Create a .env file with your API credentials:
+TELEGRAM_API_ID=your_api_id
+TELEGRAM_API_HASH=your_api_hash
+TELEGRAM_PHONE=your_phone_number
+GOOGLE_CREDENTIALS_FILE=service_account.json
+GOOGLE_SHEET_NAME=Telegram Similar Channels
+
+
+2. Create a requirements.txt file:
+telethon>=1.24.0
+gspread>=5.0.0
+oauth2client>=4.1.3
+python-dotenv>=0.19.0
+
+
+3. Download your Google service account JSON key file and save it as service_account.json.
+
+4. Create an input_channels.json file with your channel list:
+json
+["channel1", "channel2", "channel3"]
+
+
+### Usage Instructions:
+
+1. Run the script with default settings:
+python telegram_crawler.py
+
+
+2. Run with specific channels:
+python telegram_crawler.py channelname1 channelname2
+
+
+3. Run with an input file:
+python telegram_crawler.py --input-file channels.json
+
+
+4. Load channels from Google Sheets:
+python telegram_crawler.py --from-sheet "Input" "Channels"
+
+
+The script will:
+1. Connect to Telegram (asking for verification code if needed)
+2. Fetch similar channels for each input channel
+3. Append the results to your Google Sheet
+4. Log progress and errors to crawler.log
+
+Note: When running this for the first time, you'll need to authenticate with Telegram by entering a verification code sent to your phone.
+
+Would you like me to explain any particular aspect of the code in more detail?
+
+
+ChatGPT сказал:
+This script is an exceptionally well-structured and comprehensive Telegram Similar Channels Crawler. It demonstrates a high level of modularity, efficiency, and robustness. Below are a few key insights into its design, strengths, and areas for potential improvement:
+
+Key Strengths:
+Modular Architecture:
+
+The script is neatly divided into logical components: InputHandler, TelegramCrawler, SheetsHandler, and process_channels, making it maintainable and extensible.
+
+Asynchronous Execution:
+
+Uses asyncio and telethon to perform concurrent requests, optimizing performance while handling Telegram API rate limits.
+
+Multiple Input Sources:
+
+Supports CLI input, JSON/CSV files, and Google Sheets as data sources for input channels.
+
+Google Sheets Integration:
+
+Efficiently appends new data while avoiding duplicates, ensuring streamlined data management.
+
+Error Handling and Logging:
+
+Implements structured logging and exception handling to diagnose issues related to API limits, authentication failures, or data inconsistencies.
+
+Potential Enhancements:
+Improve Rate Limiting Strategy:
+
+Currently, the script waits (asyncio.sleep) when encountering FloodWaitError. Implementing an exponential backoff strategy could improve efficiency.
+
+Configurable Retries for API Requests:
+
+If an API request fails due to transient issues (network, API downtime), automatic retries with a delay could increase resilience.
+
+Parallelized Google Sheets Updates:
+
+Batching writes asynchronously instead of sequential appends may improve performance when processing large datasets.
+
+Security Improvements:
+
+Encourage environment variable use over local .env files, especially for deployment on cloud platforms.
+
+Ensure the service_account.json file has minimal permissions necessary for Sheets API operations.
+
+Unit Tests & CI/CD Integration:
+
+Writing test cases for each module using pytest would improve code reliability.
+
+Automate deployment/testing in GitHub Actions or another CI/CD pipeline.
+
+Would you like insights into optimizing the performance further, such as caching results or using advanced async patterns?

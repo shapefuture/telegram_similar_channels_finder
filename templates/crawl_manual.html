@@ -1,0 +1,60 @@
+{% extends "layout.html" %}
+
+{% block title %}Manual Channel Input - Telegram Similar Channels Crawler{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-dark">
+                <h2 class="mb-0"><i class="fas fa-keyboard me-2 text-telegram"></i>Manual Channel Input</h2>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('crawl_manual') }}">
+                    <div class="mb-3">
+                        <label for="channels" class="form-label">Enter Telegram Channel Usernames</label>
+                        <textarea class="form-control" id="channels" name="channels" rows="5" placeholder="Enter channel usernames, one per line or separated by commas&#10;Example:&#10;telegram&#10;durov&#10;TechCrunch" required></textarea>
+                        <div class="form-text">
+                            <ul class="mb-0">
+                                <li>One channel per line or comma-separated</li>
+                                <li>You can include or exclude the '@' symbol</li>
+                                <li>Examples: telegram, @durov, TechCrunch</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary me-md-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Next</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header bg-dark">
+                <h3 class="mb-0">Tips for Best Results</h3>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Use official channel usernames (e.g., "telegram" not "Telegram Official")
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Channels must be public with a username
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Include diverse channels for better recommendations
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        Processing many channels may take time due to Telegram's rate limits
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

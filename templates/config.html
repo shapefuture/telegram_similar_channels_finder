@@ -1,0 +1,260 @@
+{% extends "layout.html" %}
+
+{% block title %}Configuration - Telegram Similar Channels Crawler{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-dark">
+                <h2 class="mb-0"><i class="fas fa-cogs me-2 text-telegram"></i>Configuration</h2>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Configuration Settings</h5>
+                    <p>To use this application, you need API credentials for Telegram and Google Sheets. You can enter them below or set them in your <code>.env</code> file.</p>
+                </div>
+                
+                <form method="post" action="{{ url_for('index') }}" class="needs-validation" enctype="multipart/form-data" novalidate id="configForm">
+                    <input type="hidden" name="input_type" value="config">
+                    <div class="mt-4">
+                        <h4><i class="fab fa-telegram text-telegram me-2"></i>Telegram API Credentials</h4>
+                        <p>You need to create a Telegram application to use the crawler:</p>
+                        
+                        <ol>
+                            <li>Visit <a href="https://my.telegram.org/apps" target="_blank">https://my.telegram.org/apps</a></li>
+                            <li>Log in with your Telegram account</li>
+                            <li>Create a new application if you don't have one</li>
+                            <li>Copy the <strong>API ID</strong> and <strong>API Hash</strong> to the fields below</li>
+                        </ol>
+                        
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-6">
+                                <label for="telegram_api_id" class="form-label">Telegram API ID *</label>
+                                <input type="text" class="form-control" id="telegram_api_id" name="telegram_api_id" placeholder="12345678" value="{{ telegram_api_id }}" required>
+                                <div class="invalid-feedback">
+                                    API ID is required.
+                                </div>
+                                <div class="form-text">A numerical ID provided by Telegram.</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="telegram_api_hash" class="form-label">Telegram API Hash *</label>
+                                <input type="text" class="form-control" id="telegram_api_hash" name="telegram_api_hash" placeholder="a1b2c3d4e5f6g7h8i9j0..." value="{{ telegram_api_hash }}" required>
+                                <div class="invalid-feedback">
+                                    API Hash is required.
+                                </div>
+                                <div class="form-text">A long string of letters and numbers.</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="telegram_phone" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="telegram_phone" name="telegram_phone" placeholder="+12345678901" value="{{ telegram_phone }}">
+                                <div class="form-text">Your phone number with country code (e.g., +12345678901).</div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-warning mt-3">
+                            <i class="fas fa-shield-alt me-2"></i> <strong>Important:</strong> These credentials are specific to your Telegram account. Keep them confidential and never share them with others.
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h4><i class="fab fa-google text-telegram me-2"></i>Google Sheets API Setup</h4>
+                        <p>To export the results to Google Sheets, you'll need to set up a service account:</p>
+                        
+                        <ol>
+                            <li>Visit <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></li>
+                            <li>Create a new project</li>
+                            <li>Enable the <strong>Google Sheets API</strong> and <strong>Google Drive API</strong></li>
+                            <li>Create a service account with Editor permissions</li>
+                            <li>Download the JSON key file for your service account</li>
+                            <li>Upload the JSON key file to this application or configure the path in your <code>.env</code> file</li>
+                            <li>Share your Google Sheet with the service account email address (found in the JSON file under "client_email")</li>
+                        </ol>
+                        
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-6">
+                                <label for="google_credentials_file" class="form-label">Service Account JSON File</label>
+                                <input type="file" class="form-control" id="google_credentials_file" name="google_credentials_file">
+                                <div class="form-text">Upload your service account credentials JSON file.</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="google_sheet_name" class="form-label">Google Sheet Name</label>
+                                <input type="text" class="form-control" id="google_sheet_name" name="google_sheet_name" placeholder="Telegram Similar Channels" value="{{ google_sheet_name }}">
+                                <div class="form-text">Name of the Google Sheet to store results (will be created if it doesn't exist).</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="worksheet_name" class="form-label">Worksheet Name</label>
+                                <input type="text" class="form-control" id="worksheet_name" name="worksheet_name" placeholder="Similar Channels" value="{{ worksheet_name }}">
+                                <div class="form-text">Name of the worksheet tab within the Google Sheet.</div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i> <strong>Note:</strong> If you prefer to configure these settings manually, you can add them to your <code>.env</code> file instead of using this form.
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h4><i class="fas fa-sliders-h text-telegram me-2"></i>Optional Settings</h4>
+                        <p>You can customize the crawler behavior with these optional settings:</p>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="delay_between_channels" class="form-label">Delay Between Channels (seconds)</label>
+                                <input type="number" class="form-control" id="delay_between_channels" name="delay_between_channels" min="1" max="30" value="{{ delay_between_channels }}">
+                                <div class="form-text">Time to wait between processing each channel (helps avoid rate limits).</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="batch_size" class="form-label">Batch Size</label>
+                                <input type="number" class="form-control" id="batch_size" name="batch_size" min="10" max="100" value="{{ batch_size }}">
+                                <div class="form-text">Number of rows to add to Google Sheets at once.</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="telegram_session" class="form-label">Telegram Session Name</label>
+                                <input type="text" class="form-control" id="telegram_session" name="telegram_session" placeholder="crawler" value="{{ telegram_session }}">
+                                <div class="form-text">Name for the Telegram session file (for authentication persistence).</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h4><i class="fas fa-book-open text-telegram me-2"></i>Instructions for Setting up .env File</h4>
+                        <p>If you prefer to set up your configuration manually, create a <code>.env</code> file in the project root with the following structure:</p>
+                        
+                        <pre class="bg-dark p-3 rounded">
+# Telegram API credentials
+TELEGRAM_API_ID=your_api_id
+TELEGRAM_API_HASH=your_api_hash
+TELEGRAM_PHONE=your_phone_number  # Optional but recommended
+
+# Google Sheets API credentials
+GOOGLE_CREDENTIALS_FILE=path_to_your_credentials.json
+GOOGLE_SHEET_NAME=Your Sheet Name
+WORKSHEET_NAME=Similar Channels
+
+# Optional settings
+DELAY_BETWEEN_CHANNELS=3
+BATCH_SIZE=50
+TELEGRAM_SESSION=crawler
+SESSION_SECRET=your_secure_random_key
+                        </pre>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Configuration
+                        </button>
+                    </div>
+                    
+                    <div id="configResponse" class="mt-3" style="display: none;">
+                        <div class="alert alert-success" role="alert" id="successAlert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <span id="successMessage"></span>
+                        </div>
+                        <div class="alert alert-danger" role="alert" id="errorAlert">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <span id="errorMessage"></span>
+                        </div>
+                    </div>
+                </form>
+
+                <script>
+                // Handle form submission via AJAX
+                document.getElementById('configForm').addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const form = e.target;
+                    const formData = new FormData(form);
+                    const responseDiv = document.getElementById('configResponse');
+                    const successAlert = document.getElementById('successAlert');
+                    const errorAlert = document.getElementById('errorAlert');
+                    
+                    // Reset alerts
+                    responseDiv.style.display = 'none';
+                    successAlert.style.display = 'none';
+                    errorAlert.style.display = 'none';
+                    
+                    try {
+                        const response = await fetch(form.action, {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            document.getElementById('successMessage').textContent = data.message;
+                            successAlert.style.display = 'block';
+                            // Update form fields with saved values
+                            if (data.telegram_api_id) {
+                                document.getElementById('telegram_api_id').value = data.telegram_api_id;
+                            }
+                            if (data.telegram_api_hash) {
+                                document.getElementById('telegram_api_hash').value = data.telegram_api_hash;
+                            }
+                        } else {
+                            document.getElementById('errorMessage').textContent = data.message;
+                            errorAlert.style.display = 'block';
+                        }
+                        responseDiv.style.display = 'block';
+                        
+                        // Scroll to show message
+                        responseDiv.scrollIntoView({behavior: 'smooth'});
+                        
+                    } catch (error) {
+                        console.error('Error:', error);
+                        document.getElementById('errorMessage').textContent = 'Failed to save configuration. Please check console for details.';
+                        errorAlert.style.display = 'block';
+                        responseDiv.style.display = 'block';
+                        responseDiv.scrollIntoView({behavior: 'smooth'});
+                    }
+                });
+                </script>
+            </div>
+            <div class="card-footer">
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// JavaScript for form validation DISABLED
+/*
+(function () {
+  'use strict'
+
+  // Fetch all forms to which we want to apply custom validation
+  var forms = document.querySelectorAll('.needs-validation')
+
+  // Loop over them and prevent submission
+  Array.prototype.slice.call(forms)
+    .forEach(function (form) {
+      form.addEventListener('submit', function (event) {
+        if (!form.checkValidity()) {
+          event.preventDefault()
+          event.stopPropagation()
+        }
+
+        form.classList.add('was-validated')
+      }, false)
+    })
+})()
+*/
+</script>
+{% endblock %}

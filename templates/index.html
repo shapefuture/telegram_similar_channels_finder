@@ -1,0 +1,524 @@
+{% extends "layout.html" %}
+
+{% block title %}Telegram Similar Channels Crawler{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mb-4">
+    <div class="col-lg-10">
+        <div class="card shadow-lg">
+            <div class="card-header bg-dark">
+                <h1 class="text-center mb-0"><i class="fab fa-telegram text-telegram me-2"></i>Telegram Similar Channels Crawler</h1>
+            </div>
+            <div class="card-body">
+                <p class="lead text-center mb-4">
+                    Find similar channels to your favorite Telegram channels and export them locally.
+                </p>
+
+                <!-- Tabs Navigation -->
+                <ul class="nav nav-tabs mb-4" id="crawlerTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="input-tab" data-bs-toggle="tab" data-bs-target="#input" type="button" role="tab" aria-controls="input" aria-selected="true">
+                            <i class="fas fa-search me-2"></i>Channel Input
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="config-tab" data-bs-toggle="tab" data-bs-target="#config" type="button" role="tab" aria-controls="config" aria-selected="false">
+                            <i class="fas fa-cogs me-2"></i>Configuration
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="about-tab" data-bs-toggle="tab" data-bs-target="#about" type="button" role="tab" aria-controls="about" aria-selected="false">
+                            <i class="fas fa-info-circle me-2"></i>About
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="crawlerTabContent">
+                    <!-- Input Tab -->
+                    <div class="tab-pane fade show active" id="input" role="tabpanel" aria-labelledby="input-tab">
+                        <div class="accordion" id="inputAccordion">
+                            <!-- Manual Input -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="manualInputHeading">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#manualInputCollapse" aria-expanded="true" aria-controls="manualInputCollapse">
+                                        <i class="fas fa-keyboard me-2 text-telegram"></i>Manual Input
+                                    </button>
+                                </h2>
+                                <div id="manualInputCollapse" class="accordion-collapse collapse show" aria-labelledby="manualInputHeading" data-bs-parent="#inputAccordion">
+                                    <div class="accordion-body">
+                                        <form id="manualInputForm" method="post" action="{{ url_for('index') }}">
+                                            <input type="hidden" name="input_type" value="manual">
+                                            <div class="mb-3">
+                                                <label for="channels" class="form-label">Channel Usernames</label>
+                                                <textarea class="form-control" id="channels" name="channels" rows="5" placeholder="Enter channel usernames, one per line. For example:
+telegram
+durov
+TechChannel
+crypto_news"></textarea>
+                                                <div class="form-text">Enter channel usernames without the @ symbol, one per line.</div>
+                                            </div>
+                                            <div class="d-grid">
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="fas fa-search me-2"></i>Find Similar Channels
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- File Upload -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="fileUploadHeading">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#fileUploadCollapse" aria-expanded="false" aria-controls="fileUploadCollapse">
+                                        <i class="fas fa-file-alt me-2 text-telegram"></i>File Upload
+                                    </button>
+                                </h2>
+                                <div id="fileUploadCollapse" class="accordion-collapse collapse" aria-labelledby="fileUploadHeading" data-bs-parent="#inputAccordion">
+                                    <div class="accordion-body">
+                                        <form id="fileUploadForm" method="post" action="{{ url_for('index') }}" enctype="multipart/form-data">
+                                            <input type="hidden" name="input_type" value="file">
+                                            <div class="mb-3">
+                                                <label for="channelsFile" class="form-label">Upload File</label>
+                                                <input class="form-control" type="file" id="channelsFile" name="channelsFile" accept=".csv,.json,.txt">
+                                                <div class="form-text">Upload a CSV, JSON, or TXT file with channel usernames.</div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">File Format Examples:</label>
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <div class="card bg-dark">
+                                                            <div class="card-header py-1">
+                                                                <small><strong>CSV</strong></small>
+                                                            </div>
+                                                            <div class="card-body py-2">
+                                                                <pre class="mb-0"><small>channel
+telegram
+durov
+TechChannel</small></pre>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="card bg-dark">
+                                                            <div class="card-header py-1">
+                                                                <small><strong>JSON</strong></small>
+                                                            </div>
+                                                            <div class="card-body py-2">
+                                                                <pre class="mb-0"><small>[
+  "telegram",
+  "durov",
+  "TechChannel"
+]</small></pre>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="card bg-dark">
+                                                            <div class="card-header py-1">
+                                                                <small><strong>TXT</strong></small>
+                                                            </div>
+                                                            <div class="card-body py-2">
+                                                                <pre class="mb-0"><small>telegram
+durov
+TechChannel</small></pre>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="d-grid">
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="fas fa-upload me-2"></i>Upload and Find Similar Channels
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Google Sheets -->
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="sheetsInputHeading">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sheetsInputCollapse" aria-expanded="false" aria-controls="sheetsInputCollapse">
+                                        <i class="fas fa-table me-2 text-telegram"></i>Google Sheets
+                                    </button>
+                                </h2>
+                                <div id="sheetsInputCollapse" class="accordion-collapse collapse" aria-labelledby="sheetsInputHeading" data-bs-parent="#inputAccordion">
+                                    <div class="accordion-body">
+                                        <form id="sheetsInputForm" method="post" action="{{ url_for('index') }}">
+                                            <input type="hidden" name="input_type" value="sheets">
+                                            <div class="mb-3">
+                                                <label for="sheetName" class="form-label">Sheet Name</label>
+                                                <input type="text" class="form-control" id="sheetName" name="sheetName" value="{{ google_sheet_name if google_sheet_name else 'Telegram Channels' }}">
+                                                <div class="form-text">Name of the Google Sheet to read channel usernames from.</div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="worksheetName" class="form-label">Worksheet Name</label>
+                                                <input type="text" class="form-control" id="worksheetName" name="worksheetName" value="Input Channels">
+                                                <div class="form-text">Name of the worksheet tab to read from.</div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="columnName" class="form-label">Column Name</label>
+                                                <input type="text" class="form-control" id="columnName" name="columnName" value="channel">
+                                                <div class="form-text">Name of the column containing channel usernames.</div>
+                                            </div>
+                                            <div class="d-grid">
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="fas fa-cloud-download-alt me-2"></i>Import and Find Similar Channels
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Results Section (hidden by default) -->
+                        <div id="resultsSection" class="mt-4 {% if not channels %}d-none{% endif %}">
+                            <div class="card bg-dark">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-list me-2 text-telegram"></i>Selected Channels</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Channel Username</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="channelsList">
+                                                {% if channels %}
+                                                    {% for channel in channels %}
+                                                    <tr>
+                                                        <td>{{ loop.index }}</td>
+                                                        <td>{{ channel }}</td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                {% endif %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    
+                                    <div class="d-grid gap-2 mt-3">
+                                        <button type="button" id="startCrawlerBtn" class="btn btn-success">
+                                            <i class="fas fa-play me-2"></i>Start Crawler
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Running Crawler Section (hidden by default) -->
+                        <div id="crawlingSection" class="mt-4 d-none">
+                            <div class="card bg-dark">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-cog fa-spin me-2 text-telegram"></i>Crawler Running</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="progress mb-3">
+                                        <div id="crawlerProgress" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                    </div>
+                                    <div id="statusMessages" class="bg-dark p-3 rounded overflow-auto" style="max-height: 200px;">
+                                        <div class="text-muted"><small>Crawler log will appear here...</small></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+
+                        
+                        <!-- Results Section -->
+                        <div id="crawlerResultsSection" class="mt-4">
+                            <div class="card">
+                                <div class="card-header bg-dark">
+                                    <h5 class="mb-0"><i class="fas fa-list me-2 text-telegram"></i>Channel List</h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if results is defined and results and 'similar_channels' in results and results.similar_channels %}
+                                        <textarea id="channelListOutput" class="form-control" rows="10" readonly>{% for channel, similar_list in results.get('similar_channels', {}).items() %}{% for similar in similar_list %}{{ similar.get('username', '') }}{% if not loop.last %}&#10;{% endif %}{% endfor %}{% if not loop.last %}&#10;{% endif %}{% endfor %}</textarea>
+                                        <div class="d-grid mt-3">
+                                            <button class="btn btn-primary" onclick="copyToClipboard(document.getElementById('channelListOutput'))">
+                                                <i class="fas fa-copy me-2"></i>Copy Channel List
+                                            </button>
+                                        </div>
+                                        <script>
+                                        function copyToClipboard(element) {
+                                            element.select();
+                                            document.execCommand('copy');
+                                            alert('Channel list copied to clipboard!');
+                                        }
+                                        </script>
+                                    {% else %}
+                                        <p class="text-center text-muted">No results available. Run the crawler to find similar channels.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Configuration Tab -->
+                    <div class="tab-pane fade" id="config" role="tabpanel" aria-labelledby="config-tab">
+                        <form id="configForm" method="post" action="{{ url_for('index') }}" class="needs-validation" enctype="multipart/form-data" novalidate>
+                            <input type="hidden" name="input_type" value="config">
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <h4><i class="fab fa-telegram text-telegram me-2"></i>Telegram API Credentials</h4>
+                                    <div class="alert alert-info">
+                                        <small>
+                                            <ol class="mb-0 ps-3">
+                                                <li>Visit <a href="https://my.telegram.org/apps" target="_blank" class="alert-link">my.telegram.org/apps</a></li>
+                                                <li>Log in with your Telegram account</li>
+                                                <li>Create a new application if needed</li>
+                                                <li>Copy the API ID and API Hash</li>
+                                            </ol>
+                                        </small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="telegram_api_id" class="form-label">API ID *</label>
+                                        <input type="text" class="form-control" id="telegram_api_id" name="telegram_api_id" placeholder="12345678" value="{{ telegram_api_id }}" required>
+                                        <div class="invalid-feedback">API ID is required</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="telegram_api_hash" class="form-label">API Hash *</label>
+                                        <input type="text" class="form-control" id="telegram_api_hash" name="telegram_api_hash" placeholder="a1b2c3d4e5f6g7h8i9j0..." value="{{ telegram_api_hash }}" required>
+                                        <div class="invalid-feedback">API Hash is required</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="telegram_phone" class="form-label">Phone Number</label>
+                                        <input type="tel" class="form-control" id="telegram_phone" name="telegram_phone" placeholder="+12345678901" value="{{ telegram_phone }}">
+                                        <div class="form-text">Include country code (e.g., +12345678901)</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <h4><i class="fas fa-cog text-telegram me-2"></i>Export Settings</h4>
+                                    <div class="alert alert-info">
+                                        <small>
+                                            <p class="mb-0"><i class="fas fa-info-circle me-1"></i> Results can be exported as CSV files for easy import into spreadsheet software like Excel or Google Sheets.</p>
+                                        </small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="include_members" class="form-label">Export Data Format</label>
+                                        <select class="form-select" id="export_format" name="export_format">
+                                            <option value="csv">CSV (Excel, Google Sheets compatible)</option>
+                                            <option value="json">JSON (For developers)</option>
+                                        </select>
+                                        <div class="form-text">Choose your preferred export format</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <h4><i class="fas fa-sliders-h text-telegram me-2"></i>Optional Settings</h4>
+                            <div class="row mb-4">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="delay_between_channels" class="form-label">Delay Between Channels (seconds)</label>
+                                        <input type="number" class="form-control" id="delay_between_channels" name="delay_between_channels" min="1" max="30" value="{{ delay_between_channels if delay_between_channels else 3 }}">
+                                        <div class="form-text">Helps avoid Telegram rate limits</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="batch_size" class="form-label">Batch Size</label>
+                                        <input type="number" class="form-control" id="batch_size" name="batch_size" min="10" max="100" value="{{ batch_size if batch_size else 50 }}">
+                                        <div class="form-text">Number of results to process at once</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="telegram_session" class="form-label">Session Name</label>
+                                        <input type="text" class="form-control" id="telegram_session" name="telegram_session" value="{{ telegram_session if telegram_session else 'crawler' }}">
+                                        <div class="form-text">For authentication persistence</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <hr class="mb-4">
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Save Configuration
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- About Tab -->
+                    <div class="tab-pane fade" id="about" role="tabpanel" aria-labelledby="about-tab">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h4>About This Tool</h4>
+                                <p>The Telegram Similar Channels Crawler is a tool designed to help you discover related Telegram channels based on Telegram's own recommendation algorithm.</p>
+                                
+                                <h5 class="mt-4">How It Works</h5>
+                                <ol>
+                                    <li><strong>Input Collection</strong>: You provide a list of Telegram channel usernames either manually or through a file upload.</li>
+                                    <li><strong>Analysis</strong>: For each input channel, the tool uses Telegram's GetChannelRecommendationsRequest API to fetch similar channels.</li>
+                                    <li><strong>Export</strong>: The results are organized and can be exported as CSV files for easy access and analysis.</li>
+                                </ol>
+                                
+                                <h5 class="mt-4">Features</h5>
+                                <ul>
+                                    <li>Multiple input methods: manual entry or file upload</li>
+                                    <li>Direct CSV export for spreadsheet compatibility</li>
+                                    <li>Rate limiting protection to prevent API throttling</li>
+                                    <li>Session handling for maintaining Telegram authentication</li>
+                                    <li>Clean, user-friendly interface with copy functionality</li>
+                                </ul>
+                                
+                                <h5 class="mt-4">Privacy & Security</h5>
+                                <p>This application runs locally and your Telegram API credentials are stored only in your environment variables. No data is sent to external servers beyond the necessary API calls to Telegram.</p>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="card bg-dark h-100">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">How It Works</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-4 text-center">
+                                            <div class="bg-secondary rounded-circle mx-auto d-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                                <i class="fas fa-list-ul fa-2x text-telegram"></i>
+                                            </div>
+                                            <h6 class="mt-2">1. Input Channels</h6>
+                                            <p class="small">Provide channel usernames</p>
+                                        </div>
+                                        <div class="mb-4 text-center">
+                                            <div class="bg-secondary rounded-circle mx-auto d-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                                <i class="fas fa-search fa-2x text-telegram"></i>
+                                            </div>
+                                            <h6 class="mt-2">2. Find Similar</h6>
+                                            <p class="small">Discover related channels</p>
+                                        </div>
+                                        <div class="mb-0 text-center">
+                                            <div class="bg-secondary rounded-circle mx-auto d-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                                <i class="fas fa-file-export fa-2x text-telegram"></i>
+                                            </div>
+                                            <h6 class="mt-2">3. Export Results</h6>
+                                            <p class="small">Save as CSV file</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for the single page application -->
+<script>
+// Form validation
+(function () {
+    'use strict'
+    var forms = document.querySelectorAll('.needs-validation')
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+            form.classList.add('was-validated')
+        }, false)
+    })
+})()
+
+// Handle channel submission and show results section
+document.addEventListener('DOMContentLoaded', function() {
+    const forms = document.querySelectorAll('#manualInputForm, #fileUploadForm, #sheetsInputForm');
+    const resultsSection = document.getElementById('resultsSection');
+    const channelsList = document.getElementById('channelsList');
+    const startCrawlerBtn = document.getElementById('startCrawlerBtn');
+    const crawlingSection = document.getElementById('crawlingSection');
+    const statusMessages = document.getElementById('statusMessages');
+    const crawlerProgress = document.getElementById('crawlerProgress');
+    
+    // Simulating form submission handling (in a real app this would be AJAX or form submission)
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            // In a real app, you'd handle this with AJAX instead of this simulation
+            // This is just for demonstration purposes
+            if (form.id === 'manualInputForm') {
+                const channels = document.getElementById('channels').value;
+                if (channels.trim()) {
+                    e.preventDefault(); // Prevent actual form submission for this demo
+                    
+                    // Clear existing channels
+                    channelsList.innerHTML = '';
+                    
+                    // Add channels to the list
+                    const channelLines = channels.split('\n').filter(ch => ch.trim());
+                    channelLines.forEach((channel, index) => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${index + 1}</td>
+                            <td>${channel.trim()}</td>
+                        `;
+                        channelsList.appendChild(row);
+                    });
+                    
+                    // Show results section
+                    resultsSection.classList.remove('d-none');
+                    
+                    // Scroll to results
+                    resultsSection.scrollIntoView({ behavior: 'smooth' });
+                }
+            }
+        });
+    });
+    
+    // Simulating crawler start
+    if (startCrawlerBtn) {
+        startCrawlerBtn.addEventListener('click', function() {
+            // Hide results section and show crawling section
+            resultsSection.classList.add('d-none');
+            crawlingSection.classList.remove('d-none');
+            
+            // Simulate progress updates
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 5;
+                crawlerProgress.style.width = `${progress}%`;
+                crawlerProgress.textContent = `${progress}%`;
+                crawlerProgress.setAttribute('aria-valuenow', progress);
+                
+                // Add status message
+                if (progress % 20 === 0) {
+                    const message = document.createElement('div');
+                    message.innerHTML = `<small class="text-muted">[${new Date().toLocaleTimeString()}] Processing channel ${Math.floor(progress/10)}...</small>`;
+                    statusMessages.appendChild(message);
+                    statusMessages.scrollTop = statusMessages.scrollHeight;
+                }
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    
+                    // Simulate completion
+                    const completionMsg = document.createElement('div');
+                    completionMsg.innerHTML = `<small class="text-success">[${new Date().toLocaleTimeString()}] Crawler completed! Results ready for export.</small>`;
+                    statusMessages.appendChild(completionMsg);
+                    
+                    // For demo purposes, reset after 3 seconds
+                    setTimeout(() => {
+                        crawlingSection.classList.add('d-none');
+                        resultsSection.classList.remove('d-none');
+                    }, 3000);
+                }
+            }, 500);
+        });
+    }
+    
+    // If hash in URL, activate corresponding tab
+    const hash = window.location.hash;
+    if (hash) {
+        const tab = document.querySelector(`#crawlerTab button[data-bs-target="${hash}"]`);
+        if (tab) tab.click();
+    }
+});
+</script>
+{% endblock %}

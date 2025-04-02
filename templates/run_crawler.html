@@ -1,0 +1,84 @@
+{% extends "layout.html" %}
+
+{% block title %}Run Crawler - Telegram Similar Channels Crawler{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-dark">
+                <h2 class="mb-0"><i class="fas fa-search me-2 text-telegram"></i>Run Crawler</h2>
+            </div>
+            <div class="card-body">
+                <h4 class="mb-3">Selected Channels</h4>
+                <div class="table-responsive mb-4">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Channel Username</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for channel in channels %}
+                            <tr>
+                                <th scope="row">{{ loop.index }}</th>
+                                <td>{{ channel }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <span>
+                        <strong>Note:</strong> Depending on the number of channels, this process might take several minutes. 
+                        During this time, the application will appear to be loading. Please do not refresh the page.
+                    </span>
+                </div>
+                
+                <form method="POST" action="{{ url_for('run_crawler') }}">
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary me-md-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-play me-2"></i>Start Processing
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header bg-dark">
+                <h3 class="mb-0">Process Information</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="rounded-circle bg-dark mx-auto d-flex justify-content-center align-items-center" style="width: 70px; height: 70px;">
+                            <i class="fas fa-server fa-2x text-telegram"></i>
+                        </div>
+                        <h5 class="mt-3">1. Connect</h5>
+                        <p class="small">Connect to the Telegram API using your credentials</p>
+                    </div>
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="rounded-circle bg-dark mx-auto d-flex justify-content-center align-items-center" style="width: 70px; height: 70px;">
+                            <i class="fas fa-network-wired fa-2x text-telegram"></i>
+                        </div>
+                        <h5 class="mt-3">2. Fetch</h5>
+                        <p class="small">Retrieve similar channels for each input channel</p>
+                    </div>
+                    <div class="col-md-4 text-center mb-3">
+                        <div class="rounded-circle bg-dark mx-auto d-flex justify-content-center align-items-center" style="width: 70px; height: 70px;">
+                            <i class="fas fa-cloud-upload-alt fa-2x text-telegram"></i>
+                        </div>
+                        <h5 class="mt-3">3. Export</h5>
+                        <p class="small">Save the results to your Google Sheet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

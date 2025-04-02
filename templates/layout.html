@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Telegram Similar Channels Crawler{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .brand-icon {
+            color: #229ED9;
+        }
+        .bg-telegram {
+            background-color: #229ED9;
+        }
+        .text-telegram {
+            color: #229ED9;
+        }
+        
+        /* Copy-Paste Area Styles */
+        .copy-area {
+            background-color: #2a2a2a;
+            color: #f8f9fa;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            border: 1px solid #495057;
+            resize: vertical;
+        }
+        
+        .copy-area:focus {
+            background-color: #2a2a2a;
+            color: #f8f9fa;
+            border-color: #229ED9;
+            box-shadow: 0 0 0 0.2rem rgba(34, 158, 217, 0.25);
+        }
+        
+        .copy-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .copy-btn:hover {
+            background-color: #229ED9;
+            border-color: #229ED9;
+            color: white;
+        }
+        
+        .btn-outline-telegram {
+            color: #229ED9;
+            border-color: #229ED9;
+        }
+        
+        .btn-outline-telegram:hover {
+            background-color: #229ED9;
+            border-color: #229ED9;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+                <i class="fab fa-telegram brand-icon me-2"></i>
+                <span>Telegram Similar Channels Crawler</span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                {% set alert_class = 'alert-info' %}
+                {% if category == 'error' %}
+                    {% set alert_class = 'alert-danger' %}
+                {% elif category == 'success' %}
+                    {% set alert_class = 'alert-success' %}
+                {% elif category == 'warning' %}
+                    {% set alert_class = 'alert-warning' %}
+                {% endif %}
+                <div class="alert {{ alert_class }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer class="bg-dark text-light py-3 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <p class="mb-0">&copy; 2025 Telegram Similar Channels Crawler - <a href="{{ url_for('index', _anchor='about') }}" class="text-light">About</a></p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Clipboard Copy Functions -->
+    <script>
+    function copyToClipboard(element) {
+        if (!element) return;
+        
+        // Select the text
+        element.select();
+        element.setSelectionRange(0, 99999); // For mobile devices
+        
+        // Copy the text
+        document.execCommand('copy');
+        
+        // Show feedback
+        const originalText = element.nextElementSibling.querySelector('button').innerHTML;
+        element.nextElementSibling.querySelector('button').innerHTML = '<i class="fas fa-check me-1"></i> Copied!';
+        
+        // Reset button text after 2 seconds
+        setTimeout(function() {
+            element.nextElementSibling.querySelector('button').innerHTML = originalText;
+        }, 2000);
+    }
+    
+    function copyAllToClipboard() {
+        // Get the hidden textarea containing all channels
+        const allChannelsTextarea = document.getElementById('all-channels-list');
+        if (!allChannelsTextarea) return;
+        
+        // Copy content
+        allChannelsTextarea.select();
+        allChannelsTextarea.setSelectionRange(0, 99999); // For mobile devices
+        document.execCommand('copy');
+        
+        // Show feedback
+        const copyAllBtn = document.querySelector('.copy-all-btn');
+        const originalText = copyAllBtn.innerHTML;
+        copyAllBtn.innerHTML = '<i class="fas fa-check me-1"></i> All Copied!';
+        
+        // Reset button text after 2 seconds
+        setTimeout(function() {
+            copyAllBtn.innerHTML = originalText;
+        }, 2000);
+    }
+    </script>
+</body>
+</html>

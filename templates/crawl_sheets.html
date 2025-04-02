@@ -1,0 +1,92 @@
+{% extends "layout.html" %}
+
+{% block title %}Google Sheets Import - Telegram Similar Channels Crawler{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-dark">
+                <h2 class="mb-0"><i class="fas fa-table me-2 text-telegram"></i>Import from Google Sheets</h2>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('crawl_sheets') }}">
+                    <div class="mb-3">
+                        <label for="sheet_name" class="form-label">Google Sheet Name</label>
+                        <input type="text" class="form-control" id="sheet_name" name="sheet_name" value="{{ sheet_name }}" required>
+                        <div class="form-text">The name of the Google Sheet document</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="worksheet_name" class="form-label">Worksheet Name</label>
+                        <input type="text" class="form-control" id="worksheet_name" name="worksheet_name" value="{{ worksheet_name }}" required>
+                        <div class="form-text">The name of the specific worksheet/tab within the Google Sheet</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="column_name" class="form-label">Column Name</label>
+                        <input type="text" class="form-control" id="column_name" name="column_name" value="{{ column_name }}" required>
+                        <div class="form-text">The name of the column containing channel usernames</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary me-md-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Import</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header bg-dark">
+                <h3 class="mb-0">Google Sheets Setup</h3>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Requirements</h5>
+                    <p>Before using this feature, ensure you've set up Google Sheets access:</p>
+                    <ol class="mb-0">
+                        <li>Create a Google Service Account with Google Sheets API access</li>
+                        <li>Download the credentials JSON file</li>
+                        <li>Set the file path in your <code>.env</code> file as <code>GOOGLE_CREDENTIALS_FILE</code></li>
+                        <li>Share your Google Sheet with the service account email address</li>
+                    </ol>
+                </div>
+                
+                <div class="mt-4">
+                    <h5>Example Sheet Format</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Category</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>telegram</td>
+                                    <td>Official</td>
+                                    <td>Telegram official channel</td>
+                                </tr>
+                                <tr>
+                                    <td>durov</td>
+                                    <td>Personal</td>
+                                    <td>Pavel Durov's channel</td>
+                                </tr>
+                                <tr>
+                                    <td>TechCrunch</td>
+                                    <td>News</td>
+                                    <td>Tech news</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="small text-muted">In this example, set "Username" as the column name in the form above</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

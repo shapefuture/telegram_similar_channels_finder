@@ -1,0 +1,55 @@
+2025-04-03 02:19:38,130 - TelegramCrawler - INFO - Logging system initialized successfully
+2025-04-03 02:19:38,130 - TelegramCrawler - INFO - Logging to: /Users/viktor/GITHUB/telegram_similar_channels_finder/logs/crawler.log
+Log file created and writable
+2025-04-03 02:19:38,130 - TelegramCrawler - INFO - Confirmed log file is writable
+2025-04-03 02:19:38,139 - TelegramCrawler - INFO - Loaded 10 channels from command line
+2025-04-03 02:19:38,140 - TelegramCrawler - INFO - Validated 10 channels out of 10
+2025-04-03 02:19:38,140 - TelegramCrawler - INFO - Starting processing of 10 channels
+2025-04-03 02:19:38,141 - TelegramCrawler - INFO - PROCESS_CHANNELS STARTED
+2025-04-03 02:19:38,142 - TelegramCrawler - INFO - Attempting to connect with API ID: 18684807
+2025-04-03 02:19:38,754 - TelegramCrawler - INFO - Successfully connected as: wmobilas
+2025-04-03 02:19:38,755 - TelegramCrawler - INFO - Processing channel 1/10: RabotaUdalenka,
+2025-04-03 02:19:38,794 - TelegramCrawler - ERROR - Error fetching similar channels for RabotaUdalenka,: Cannot find any entity corresponding to "RabotaUdalenka,"
+2025-04-03 02:19:38,794 - TelegramCrawler - WARNING - No similar channels found for RabotaUdalenka,
+2025-04-03 02:19:38,794 - TelegramCrawler - INFO - Waiting 10 seconds before processing next channel
+2025-04-03 02:19:48,796 - TelegramCrawler - INFO - Processing channel 2/10: hh_vacancy_medicine,
+2025-04-03 02:19:48,798 - TelegramCrawler - ERROR - Error fetching similar channels for hh_vacancy_medicine,: Cannot find any entity corresponding to "hh_vacancy_medicine,"
+2025-04-03 02:19:48,798 - TelegramCrawler - WARNING - No similar channels found for hh_vacancy_medicine,
+2025-04-03 02:19:48,799 - TelegramCrawler - INFO - Waiting 10 seconds before processing next channel
+2025-04-03 02:19:58,801 - TelegramCrawler - INFO - Processing channel 3/10: PsychologiesRussia,
+2025-04-03 02:19:58,802 - TelegramCrawler - ERROR - Error fetching similar channels for PsychologiesRussia,: Cannot find any entity corresponding to "PsychologiesRussia,"
+2025-04-03 02:19:58,802 - TelegramCrawler - WARNING - No similar channels found for PsychologiesRussia,
+2025-04-03 02:19:58,803 - TelegramCrawler - INFO - Waiting 10 seconds before processing next channel
+2025-04-03 02:20:08,805 - TelegramCrawler - INFO - Processing channel 4/10: Iryna_Kyrychenko,
+2025-04-03 02:20:08,806 - TelegramCrawler - ERROR - Error fetching similar channels for Iryna_Kyrychenko,: Cannot find any entity corresponding to "Iryna_Kyrychenko,"
+2025-04-03 02:20:08,806 - TelegramCrawler - WARNING - No similar channels found for Iryna_Kyrychenko,
+2025-04-03 02:20:08,806 - TelegramCrawler - INFO - Waiting 10 seconds before processing next channel
+2025-04-03 02:20:18,808 - TelegramCrawler - INFO - Processing channel 5/10: emergentcoaching,
+2025-04-03 02:20:18,810 - TelegramCrawler - ERROR - Error fetching similar channels for emergentcoaching,: Cannot find any entity corresponding to "emergentcoaching,"
+2025-04-03 02:20:18,810 - TelegramCrawler - WARNING - No similar channels found for emergentcoaching,
+2025-04-03 02:20:18,811 - TelegramCrawler - INFO - Waiting 10 seconds before processing next channel
+2025-04-03 02:20:28,814 - TelegramCrawler - INFO - Processing channel 6/10: sport_rabota,
+2025-04-03 02:20:28,816 - TelegramCrawler - ERROR - Error fetching similar channels for sport_rabota,: Cannot find any entity corresponding to "sport_rabota,"
+2025-04-03 02:20:28,817 - TelegramCrawler - WARNING - No similar channels found for sport_rabota,
+2025-04-03 02:20:28,817 - TelegramCrawler - INFO - Waiting 10 seconds before processing next channel
+2025-04-03 02:20:38,819 - TelegramCrawler - INFO - Processing channel 7/10: TarasInfobiz,
+2025-04-03 02:20:38,825 - TelegramCrawler - ERROR - Error fetching similar channels for TarasInfobiz,: Cannot find any entity corresponding to "TarasInfobiz,"
+2025-04-03 02:20:38,825 - TelegramCrawler - WARNING - No similar channels found for TarasInfobiz,
+2025-04-03 02:20:38,825 - TelegramCrawler - INFO - Waiting 10 seconds before processing next channel
+2025-04-03 02:20:48,829 - TelegramCrawler - INFO - Processing channel 8/10: smacjobs,
+2025-04-03 02:20:48,830 - TelegramCrawler - ERROR - Error fetching similar channels for smacjobs,: Cannot find any entity corresponding to "smacjobs,"
+2025-04-03 02:20:48,831 - TelegramCrawler - WARNING - No similar channels found for smacjobs,
+2025-04-03 02:20:48,831 - TelegramCrawler - INFO - Waiting 10 seconds before processing next channel
+2025-04-03 02:20:58,834 - TelegramCrawler - INFO - Processing channel 9/10: transformation_life_coaching,
+2025-04-03 02:20:58,837 - TelegramCrawler - ERROR - Error fetching similar channels for transformation_life_coaching,: Cannot find any entity corresponding to "transformation_life_coaching,"
+2025-04-03 02:20:58,837 - TelegramCrawler - WARNING - No similar channels found for transformation_life_coaching,
+2025-04-03 02:20:58,837 - TelegramCrawler - INFO - Waiting 10 seconds before processing next channel
+2025-04-03 02:21:08,839 - TelegramCrawler - INFO - Processing channel 10/10: psyhology_and_coaching
+2025-04-03 02:21:09,001 - TelegramCrawler - INFO - Fetching recommendations for channel: psyhology_and_coaching
+2025-04-03 02:22:44,162 - TelegramCrawler - INFO - Found 99 similar channels for psyhology_and_coaching
+2025-04-03 02:22:44,168 - TelegramCrawler - INFO - Disconnected from Telegram
+2025-04-03 02:22:44,168 - TelegramCrawler - INFO - Completed processing 10 channels
+2025-04-03 02:22:44,173 - TelegramCrawler - INFO - Successful: 1, Failed: 9
+2025-04-03 02:22:44,174 - TelegramCrawler - INFO - Total similar channels found: 99
+2025-04-03 02:22:44,175 - TelegramCrawler - INFO - Results saved to results_20250403_022244.json
+2025-04-03 02:22:44,176 - TelegramCrawler - INFO - Processing completed
